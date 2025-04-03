@@ -9,6 +9,7 @@ library(ggplot2)
 library(ggpubr)
 library(modeest)
 library(tibble)
+library(MASS)
 
 ## for shinyR demo
 demo1 <- mPower(feature.dat = feature.dat, model.paras = model.paras,
@@ -82,6 +83,28 @@ save(res2.noconf, res2.conf, file = '/Users/luyang1/myicloud/Documents/Mayo_Rese
 
 summary((res2.noconf$aTPR$aTPR-res2.conf$aTPR$aTPR)/res2.noconf$aTPR$aTPR)
 
+res2.noconf.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                      test = 'Taxa', design = 'CaseControl',
+                      nSams = 50, grp.ratio = 0.5,# 20 vs. 30
+                      iters = 100, alpha = 0.1,
+                      prev.filter = 0.2, max.abund.filter = 0.002,
+                      diff.otu.pct = 0.27, diff.otu.direct = 'balanced',diff.otu.mode = 'random',
+                      covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                      confounder = 'no', depth.mu = 100000, depth.sd = 40000)
+res2.conf.genus <- mPower(feature.dat = feature.dat, model.paras = model.paras,
+                    test = 'Taxa', design = 'CaseControl',
+                    nSams = 50, grp.ratio = 0.5,
+                    iters = 100, alpha = 0.1,
+                    prev.filter = 0.2, max.abund.filter = 0.002,
+                    diff.otu.pct = 0.27, diff.otu.direct = 'balanced',diff.otu.mode = 'random',
+                    covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                    confounder.eff.max = 1, conf.cov.cor = 0.6, conf.diff.otu.pct = 0.1, # confounder effect
+                    confounder = 'yes', depth.mu = 100000, depth.sd = 40000)
+ggarrange(res2.noconf.genus$plot, res2.conf.genus$plot, nrow=2)
+ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case2.genus.pdf", width = 12, height = 8)
+save(res2.noconf.genus, res2.conf.genus, file = '/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case2.genus.RData')
+
+
 ## case3: paired design
 res3.match <- mPower(feature.dat = feature.dat, model.paras = model.paras,
                      test = 'Taxa', design = 'MatchedPair',
@@ -104,6 +127,38 @@ ggarrange(res3.match$plot, res3.casecontrol$plot, nrow=2)
 ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.pdf", width = 12, height = 8)
 save(res3.match,res3.casecontrol, file = '/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.RData')
 
+res3.match.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                     test = 'Taxa', design = 'MatchedPair',
+                     nSams = 25, iters = 100, alpha = 0.1,
+                     prev.filter = 0.2, max.abund.filter = 0.002,
+                     diff.otu.pct = 0.27, diff.otu.direct = 'balanced',diff.otu.mode = 'random',
+                     covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                     confounder = 'no', depth.mu = 100000, depth.sd = 40000)
+res3.casecontrol.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                           test = 'Taxa', design = 'CaseControl',
+                           nSams = 50, grp.ratio = 0.5,
+                           iters = 100, alpha = 0.1,
+                           prev.filter = 0.2, max.abund.filter = 0.002,
+                           diff.otu.pct = 0.27, diff.otu.direct = 'balanced',diff.otu.mode = 'random',
+                           covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                           confounder.eff.max = 1, conf.cov.cor = 0.6, conf.diff.otu.pct = 0.1, # confounder effect
+                           confounder = 'yes', depth.mu = 100000, depth.sd = 40000)
+res3.casecontrol.noconf.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                                 test = 'Taxa', design = 'CaseControl',
+                                 nSams = 50, grp.ratio = 0.5,
+                                 iters = 100, alpha = 0.1,
+                                 prev.filter = 0.2, max.abund.filter = 0.002,
+                                 diff.otu.pct = 0.27, diff.otu.direct = 'balanced',diff.otu.mode = 'random',
+                                 covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                                 confounder.eff.max = 1, conf.cov.cor = 0.6, conf.diff.otu.pct = 0.1, # confounder effect
+                                 confounder = 'no', depth.mu = 100000, depth.sd = 40000)
+gc()
+res3.match.genus$aTPR;res3.casecontrol.genus$aTPR
+mean((res3.match.genus$aTPR$aTPR-res3.casecontrol.genus$aTPR$aTPR)/res3.match.genus$aTPR$aTPR)
+mean((res3.match.genus$aTPR$aTPR-res3.casecontrol.noconf.genus$aTPR$aTPR)/res3.match.genus$aTPR$aTPR)
+ggarrange(res3.match.genus$plot, res3.casecontrol.genus$plot,res3.casecontrol.noconf.genus$plot, nrow=3)
+ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.genus.pdf", width = 12, height = 8)
+save(res3.match.genus,res3.casecontrol.genus, res3.casecontrol.noconf.genus, file = '/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.genus.RData')
 
 
 ## case4: depth
@@ -141,6 +196,42 @@ ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Re
 save(res4.low, res4.high, res4.highest, file = '/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case4.RData')
 
 
+res4.low.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                   test = 'Taxa', design = 'CaseControl',
+                   nSams = 50, grp.ratio = 0.5,
+                   iters = 100, alpha = 0.1,
+                   prev.filter = 0, max.abund.filter = 0,
+                   diff.otu.pct = 0.2, diff.otu.direct = 'balanced',diff.otu.mode = 'rare',
+                   covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                   confounder.eff.max = 1, conf.cov.cor = 0.8, conf.diff.otu.pct = 0.05,
+                   confounder = 'no', depth.mu = 10000, depth.sd = 4000)
+res4.high.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                    test = 'Taxa', design = 'CaseControl',
+                    nSams = 50, grp.ratio = 0.5,
+                    iters = 100, alpha = 0.1,
+                    prev.filter = 0, max.abund.filter = 0,
+                    diff.otu.pct = 0.2, diff.otu.direct = 'balanced',diff.otu.mode = 'rare',
+                    covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                    confounder.eff.max = 1, conf.cov.cor = 0.8, conf.diff.otu.pct = 0.05,
+                    confounder = 'no', depth.mu = 100000, depth.sd = 40000)
+res4.highest.genus <- mPower(feature.dat = feature.dat.genus, model.paras = model.paras.genus,
+                       test = 'Taxa', design = 'CaseControl',
+                       nSams = 50, grp.ratio = 0.5,
+                       iters = 100, alpha = 0.1,
+                       prev.filter = 0, max.abund.filter = 0,
+                       diff.otu.pct = 0.2, diff.otu.direct = 'balanced',diff.otu.mode = 'rare',
+                       covariate.eff.min = 0, covariate.eff.maxs = c(0.5,1,1.5,2,2.5),
+                       confounder.eff.max = 1, conf.cov.cor = 0.8, conf.diff.otu.pct = 0.05,
+                       confounder = 'no', depth.mu = 1000000, depth.sd = 400000)
+
+# (depth.mu^2) / (depth.sd^2 - depth.mu)
+ggarrange(res4.low.genus$plot, res4.high.genus$plot,res4.highest.genus$plot,nrow=3)
+ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case4.genus.pdf", width = 12, height = 10)
+save(res4.low.genus, res4.high.genus, res4.highest.genus, file = '/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case4.genus.RData')
+
+
+
+
 library(RColorBrewer)
 load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case1.RData')
 df <- rbind(res1.noconf$TPR.beta %>% mutate(Group='No confounder'),
@@ -160,7 +251,9 @@ p1 <- ggplot(df, aes(x = nSam, y = value, color = Group)) +
 p1
 
 
-load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case2.RData')
+load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case2.genus.RData')
+res2.noconf <- res2.noconf.genus
+res2.conf <- res2.conf.genus
 df <- rbind(res2.noconf$aTPR %>% mutate(Group='No confounder'),
             res2.conf$aTPR %>% mutate(Group='With confounder'))
 p2 <- ggplot(df, aes(x = `max log2 fold change`, y = aTPR, color = Group)) +
@@ -177,7 +270,9 @@ p2 <- ggplot(df, aes(x = `max log2 fold change`, y = aTPR, color = Group)) +
 p2
 
 
-load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.RData')
+load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case3.genus.RData')
+res3.match <- res3.match.genus
+res3.casecontrol <- res3.casecontrol.genus
 df <- rbind(res3.match$aTPR %>% mutate(Group='Matched Pair'),
             res3.casecontrol$aTPR %>% mutate(Group='Case-Control'))
 p3 <- ggplot(df, aes(x = `max log2 fold change`, y = aTPR, color = Group)) +
@@ -192,7 +287,10 @@ p3 <- ggplot(df, aes(x = `max log2 fold change`, y = aTPR, color = Group)) +
         )
 p3
 
-load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case4.RData')
+load('/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/case4.genus.RData')
+res4.low <- res4.low.genus
+res4.high <- res4.high.genus
+res4.highest <- res4.highest.genus
 df <- rbind(res4.low$aTPR %>% mutate(Group='Mean depth=10k'),
             res4.high$aTPR %>% mutate(Group='Mean depth=100k'),
             res4.highest$aTPR %>% mutate(Group='Mean depth=1000k'))
@@ -210,7 +308,7 @@ p4
 
 library(ggpubr)
 ggarrange(p1, p2, p3, p4, labels = c("a", "b", "c", "d"))
-ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/Figure_cases.pdf", width = 12, height = 7)
+ggsave("/Users/luyang1/myicloud/Documents/Mayo_Research/2023_05_06_PowerShiny/Result/Figure_cases_genus.pdf", width = 12, height = 7)
 
 
 
